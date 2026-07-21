@@ -1,4 +1,5 @@
 import React from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider } from './context/AuthContext';
 import { CurrencyProvider } from './context/CurrencyContext';
 import { CartProvider } from './context/CartContext';
@@ -12,6 +13,7 @@ function App() {
         <CurrencyProvider>
           <CartProvider>
             <AppContent />
+            <Analytics />
           </CartProvider>
         </CurrencyProvider>
       </SettingsProvider>
