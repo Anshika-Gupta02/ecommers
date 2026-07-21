@@ -16,15 +16,22 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB Atlas
-connectDB();
-
 // Middleware
 app.use(cors({
   origin: true,
   credentials: true
 }));
 app.use(express.json());
+
+// Ensure Database Connection on Serverless Executions
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+  } catch (err) {
+    console.error('DB Connection Middleware Error:', err);
+  }
+  next();
+});
 
 // Routes Mount
 app.use('/api/auth', authRoutes);
@@ -47,7 +54,7 @@ app.get('/api', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Internal server error occurred!' });
+  res.status(500).json({ message: err.message || 'Internal server error occurred!' });
 });
 
 // Start Server locally if not running on Vercel Serverless

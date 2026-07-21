@@ -4,24 +4,30 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dns from 'dns';
 
-// Fix for Windows Node.js DNS SRV resolution for MongoDB Atlas
-dns.setServers(['8.8.8.8', '1.1.1.1']);
+// Fix for Windows Node.js DNS SRV resolution (only on Windows)
+if (process.platform === 'win32') {
+  try {
+    dns.setServers(['8.8.8.8', '1.1.1.1']);
+  } catch (e) {
+    // Ignore DNS set errors if restricted
+  }
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
-const MONGO_URI = process.env.MONGO_URI;
-
 export async function connectDB() {
+  const MONGO_URI = process.env.MONGO_URI;
+
   try {
     if (mongoose.connection.readyState >= 1) {
       return mongoose.connection;
     }
 
     if (!MONGO_URI) {
-      console.warn('⚠️ MONGO_URI missing in backend/.env');
+      console.warn('⚠️ MONGO_URI missing in environment variables');
       return null;
     }
 
@@ -34,7 +40,6 @@ export async function connectDB() {
     return conn.connection;
   } catch (error) {
     console.error(`❌ MongoDB Connection Error: ${error.message}`);
-    console.warn(`💡 Note: Please verify MONGO_URI and password in backend/.env.`);
     return null;
   }
 }
