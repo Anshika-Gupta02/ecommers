@@ -21,7 +21,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], // React app default ports
+  origin: true,
   credentials: true
 }));
 app.use(express.json());
@@ -40,13 +40,21 @@ app.get('/', (req, res) => {
   res.json({ message: 'Agua by Agua Bendita E-commerce API is running with MongoDB Atlas...' });
 });
 
+app.get('/api', (req, res) => {
+  res.json({ message: 'Agua by Agua Bendita API is active.' });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Internal server error occurred!' });
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-});
+// Start Server locally if not running on Vercel Serverless
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
+  });
+}
+
+export default app;
