@@ -1,6 +1,9 @@
 import React from 'react';
+import { useSettings } from '../context/SettingsContext';
 
 export default function Footer({ setPage }) {
+  const { settings } = useSettings();
+
   const navigateTo = (pageName) => {
     setPage(pageName);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -11,10 +14,20 @@ export default function Footer({ setPage }) {
       <div className="container footer-grid">
         {/* Brand Information */}
         <div className="footer-col brand-info">
-          <h3 className="footer-logo">ANSHIKA'S</h3>
-          <span className="footer-logo-sub">STORE</span>
+          {settings?.logo_url ? (
+            <img 
+              src={settings.logo_url} 
+              alt={settings.store_name || "Store Logo"} 
+              style={{ maxHeight: '48px', maxWidth: '200px', objectFit: 'contain', marginBottom: '1rem' }} 
+            />
+          ) : (
+            <>
+              <h3 className="footer-logo">{settings?.store_name?.split(' ')[0] || "ANSHIKA'S"}</h3>
+              <span className="footer-logo-sub">{settings?.store_name?.split(' ').slice(1).join(' ') || "STORE"}</span>
+            </>
+          )}
           <p className="footer-description">
-            A premium botanical home linens brand celebrating comfort, organic Egyptian cotton, French flax linen, and delicate hand-embroidery.
+            {settings?.tagline || "A premium botanical home linens brand celebrating comfort, organic Egyptian cotton, French flax linen, and delicate hand-embroidery."}
           </p>
         </div>
 
@@ -66,7 +79,7 @@ export default function Footer({ setPage }) {
       {/* Bottom Bar */}
       <div className="footer-bottom">
         <div className="container footer-bottom-flex">
-          <p className="copyright">&copy; 2026 ANSHIKA'S STORE. All Rights Reserved.</p>
+          <p className="copyright">&copy; {new Date().getFullYear()} {settings?.store_name?.toUpperCase() || "ANSHIKA'S STORE"}. All Rights Reserved.</p>
           <div className="social-links">
             <a href="#" className="social-link">Instagram</a>
             <a href="#" className="social-link">Pinterest</a>

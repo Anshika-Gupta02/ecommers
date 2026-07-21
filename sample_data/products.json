@@ -1,0 +1,93 @@
+[
+  {
+    "name": "Orchid Embroidered Bedsheet Set",
+    "category_name": "Bedsheets",
+    "description": "Exquisite sheet set in 400-thread-count organic Egyptian cotton, featuring hand-guided botanical orchid embroidery along the borders. Set includes one flat sheet, one fitted sheet, and two standard pillowcases.",
+    "price": 240,
+    "size_options": ["Queen", "King", "Cal King"],
+    "details": "Fabric: 100% Organic Egyptian Cotton (400 TC). Care: Machine wash warm on gentle cycle, tumble dry low. Details: Luxurious sateen weave, hand-embroidered orchid borders, fits mattresses up to 16\" deep.",
+    "images": [
+      { "image_url": "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&q=80&w=600", "is_primary": true },
+      { "image_url": "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&q=80&w=600", "is_primary": false }
+    ]
+  },
+  {
+    "name": "French Olive Linen Duvet Cover",
+    "category_name": "Bedsheets",
+    "description": "Pre-washed French flax linen duvet cover in a rich, warm olive green hue. Incredibly breathable and naturally temperature-regulating, gaining softness with every wash.",
+    "price": 310,
+    "size_options": ["Queen", "King"],
+    "details": "Fabric: 100% French Flax Linen. Care: Machine wash cold, tumble dry low or hang dry. Details: Pre-washed for premium texture, interior corner ties to secure duvet insert, hidden coconut shell button closure.",
+    "images": [
+      { "image_url": "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&q=80&w=600", "is_primary": true },
+      { "image_url": "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&q=80&w=600", "is_primary": false }
+    ]
+  },
+  {
+    "name": "Jungle Bloom Fitted Sheet",
+    "category_name": "Bedsheets",
+    "description": "Bring dynamic color to your bedroom with this fitted sheet, crafted in 300-thread-count organic cotton and printed with custom hand-illustrated tropical jungle blooms.",
+    "price": 160,
+    "size_options": ["Twin", "Full", "Queen", "King"],
+    "details": "Fabric: 100% Organic Cotton Percale. Care: Machine wash cold, tumble dry medium. Details: Crisp and cool percale weave, continuous elastic hem for a snug fit, certified eco-friendly dyes.",
+    "images": [
+      { "image_url": "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&q=80&w=600", "is_primary": true }
+    ]
+  },
+  {
+    "name": "Lavanda Embroidered Pillowcase Set",
+    "category_name": "Pillow Covers",
+    "description": "Set of two organic cotton sateen pillowcases adorned with delicate, hand-embroidered lavender sprigs along the cuffs. Elegant, soft, and romantic addition to your bedscape.",
+    "price": 70,
+    "size_options": ["Standard", "King"],
+    "details": "Fabric: 100% Organic Cotton Sateen. Care: Machine wash warm, iron if needed. Details: Envelope closure, hand-embroidered floral design, pack of two.",
+    "images": [
+      { "image_url": "https://images.unsplash.com/photo-1616627547471-217cfcd77528?auto=format&fit=crop&q=80&w=600", "is_primary": true },
+      { "image_url": "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&q=80&w=600", "is_primary": false }
+    ]
+  },
+  {
+    "name": "Palma Linen Cushion Cover",
+    "category_name": "Pillow Covers",
+    "description": "Square decorative cushion cover featuring hand-painted palm leaves on an organic linen-silk blend background. The perfect artisanal accent for your bed or reading chair.",
+    "price": 55,
+    "size_options": ["18x18", "20x20"],
+    "details": "Fabric: 70% Linen, 30% Silk. Care: Dry clean only. Details: Hand-painted botanical motif, invisible zipper closure, insert not included.",
+    "images": [
+      { "image_url": "https://images.unsplash.com/photo-1580301762395-21ce84d00bc6?auto=format&fit=crop&q=80&w=600", "is_primary": true }
+    ]
+  },
+  {
+    "name": "Rosa Smocked Pillowcase Set",
+    "category_name": "Pillow Covers",
+    "description": "Set of two pillowcases crafted in organic cotton percale and finished with vintage-inspired smocked detailing on the borders. Colored in a soft, dreamy rose water shade.",
+    "price": 80,
+    "size_options": ["Standard", "Euro"],
+    "details": "Fabric: 100% Organic Cotton Percale. Care: Machine wash cold, dry on low. Details: Intricate smocked hem, envelope cuff closure, set of two.",
+    "images": [
+      { "image_url": "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=600", "is_primary": true }
+    ]
+  },
+  {
+    "name": "Amapola Knitted Throw Blanket",
+    "category_name": "Blankets & Throws",
+    "description": "Cozy and heavy throw blanket knitted from pure recycled cotton threads. Adorned with a custom, hand-guided jacquard floral Amapola (poppy) design with fringed hems.",
+    "price": 150,
+    "size_options": ["O/S"],
+    "details": "Fabric: 100% Recycled Cotton. Care: Hand wash cold or dry clean. Dimensions: 50\" W x 60\" L. Details: Fringed edges, soft jacquard knit pattern.",
+    "images": [
+      { "image_url": "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&q=80&w=600", "is_primary": true }
+    ]
+  },
+  {
+    "name": "Girasol Quilted Bedspread",
+    "category_name": "Blankets & Throws",
+    "description": "Lightweight quilted bedspread in a botanical sunflower pattern. Features hand-stitched quilting lines and a soft cotton filling, providing comfortable warmth on cooler nights.",
+    "price": 340,
+    "size_options": ["Queen/King"],
+    "details": "Fabric: 100% Cotton shell and fill. Care: Machine wash cold on delicate cycle. Details: Hand-quilted, double-sided design, sunflower motif, lightweight.",
+    "images": [
+      { "image_url": "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&q=80&w=600", "is_primary": true }
+    ]
+  }
+]

@@ -28,7 +28,6 @@ export function AuthProvider({ children }) {
           const userData = await res.json();
           setUser(userData);
         } else {
-          // Token expired or invalid
           logout();
         }
       } catch (err) {
@@ -91,31 +90,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const googleLogin = async (idToken) => {
-    setError(null);
-    try {
-      const res = await fetch(`${API_URL}/auth/google-login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_token: idToken })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Google Sign-In failed');
-      }
-
-      localStorage.setItem('token', data.token);
-      setToken(data.token);
-      setUser(data.user);
-      return data.user;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    }
-  };
-
   const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
@@ -129,7 +103,6 @@ export function AuthProvider({ children }) {
     error,
     login,
     register,
-    googleLogin,
     logout,
     isAuthenticated: !!user
   };

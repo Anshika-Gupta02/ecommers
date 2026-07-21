@@ -4,7 +4,7 @@
   "description": "Root workspace command to start Agua by Agua Bendita e-commerce store",
   "scripts": {
     "install:all": "npm install --prefix backend && npm install --prefix frontend",
-    "seed": "node backend/seed.js",
+    "seed": "node backend/seed-mongo.js",
     "seed:mongo": "node backend/seed-mongo.js",
     "build": "npm install --prefix frontend && npm run build --prefix frontend",
     "start": "concurrently \"npm start --prefix backend\" \"npm run dev --prefix frontend\""

@@ -4,6 +4,7 @@ import Product from '../models/Product.js';
 import Category from '../models/Category.js';
 import ContactInquiry from '../models/ContactInquiry.js';
 import PromoCode from '../models/PromoCode.js';
+import StoreSettings from '../models/StoreSettings.js';
 import mongoose from 'mongoose';
 
 export async function getAllOrders(req, res) {
@@ -343,5 +344,46 @@ export async function validatePromoCode(req, res) {
   } catch (error) {
     console.error('ValidatePromoCode error:', error);
     res.status(500).json({ message: 'Server error validating promo code' });
+  }
+}
+
+// Store Settings
+export async function getStoreSettings(req, res) {
+  try {
+    let settings = await StoreSettings.findOne({});
+    if (!settings) {
+      settings = new StoreSettings({});
+      await settings.save();
+    }
+    res.json(settings);
+  } catch (error) {
+    console.error('GetStoreSettings error:', error);
+    res.status(500).json({ message: 'Server error fetching store settings' });
+  }
+}
+
+export async function updateStoreSettings(req, res) {
+  const { store_name, logo_url, tagline, contact_email, phone, address } = req.body;
+
+  try {
+    let settings = await StoreSettings.findOne({});
+    if (!settings) {
+      settings = new StoreSettings({});
+    }
+
+    if (store_name !== undefined) settings.store_name = store_name;
+    if (logo_url !== undefined) settings.logo_url = logo_url;
+    if (tagline !== undefined) settings.tagline = tagline;
+    if (contact_email !== undefined) settings.contact_email = contact_email;
+    if (phone !== undefined) settings.phone = phone;
+    if (address !== undefined) settings.address = address;
+
+    settings.updated_at = new Date();
+    await settings.save();
+
+    res.json({ message: 'Store settings updated successfully', settings });
+  } catch (error) {
+    console.error('UpdateStoreSettings error:', error);
+    res.status(500).json({ message: 'Server error updating store settings' });
   }
 }

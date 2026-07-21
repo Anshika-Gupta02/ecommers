@@ -3,12 +3,14 @@ import { useAuth } from '../context/AuthContext';
 import Swal from 'sweetalert2';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
+import { useSettings } from '../context/SettingsContext';
 import { ShoppingBag, User, LogOut, Menu, X } from 'lucide-react';
 
 export default function Navbar({ setPage, currentPage }) {
   const { user, logout, isAuthenticated } = useAuth();
   const { cartCount, setCartOpen } = useCart();
   const { selectedCurrency, setSelectedCurrency, currencies } = useCurrency();
+  const { settings } = useSettings();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -86,10 +88,22 @@ export default function Navbar({ setPage, currentPage }) {
             </button>
           </div>
 
-          {/* Center Brand Name */}
+          {/* Center Brand Name / Dynamic Logo */}
           <div className="nav-brand" onClick={() => navigateTo('home')}>
-            ANSHIKA'S
-            <span className="brand-sub">STORE</span>
+            {settings?.logo_url ? (
+              <img 
+                src={settings.logo_url} 
+                alt={settings.store_name || "Store Logo"} 
+                style={{ maxHeight: '42px', maxWidth: '180px', objectFit: 'contain' }} 
+              />
+            ) : (
+              <>
+                {settings?.store_name?.split(' ')[0] || "ANSHIKA'S"}
+                <span className="brand-sub">
+                  {settings?.store_name?.split(' ').slice(1).join(' ') || "STORE"}
+                </span>
+              </>
+            )}
           </div>
 
           {/* Right Navigation Controls */}

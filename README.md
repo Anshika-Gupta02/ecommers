@@ -1,15 +1,15 @@
 # Agua by Agua Bendita E-Commerce Store
 
-A premium full-stack e-commerce web application inspired by the **Agua by Agua Bendita** designer brand. Built using **React (Vite)** on the frontend, **Node.js (Express)** on the backend, and **MySQL** for data management.
+A premium full-stack e-commerce web application inspired by the **Agua by Agua Bendita** designer brand. Built using **React (Vite)** on the frontend, **Node.js (Express)** on the backend, and **MongoDB Atlas (Mongoose)** for data management.
 
 ---
 
 ## 🚀 Key Features
 
-*   **Premium Visual Design**: Vibrant custom CSS, clean layouts, and smooth animations (e.g., hover effects and slide-out cart drawer).
+*   **Premium Visual Design**: Vibrant custom CSS, clean layouts, and smooth animations.
 *   **Complete Product Catalog**: Filter by category, view detailed product pages with size options, and image gallery.
 *   **Dynamic Cart Drawer**: Add, remove, and update items in the cart seamlessly.
-*   **Robust Authentication**: Secure Register, Login, and Google OAuth support.
+*   **Robust Authentication**: Secure Register and Login powered by JWT & Bcrypt.
 *   **Admin Dashboard**: Manage inventory, view customer contact inquiries, and track orders.
 *   **Checkout & Order History**: User profile dashboard with checkout form and past order history.
 *   **Multi-Currency Support**: Switch between multiple currencies (USD, INR, EUR, etc.).
@@ -27,9 +27,8 @@ A premium full-stack e-commerce web application inspired by the **Agua by Agua B
 ### Backend
 *   **Runtime**: Node.js
 *   **Framework**: Express.js
-*   **Database**: MySQL (using `mysql2` promise pools)
+*   **Database**: MongoDB Atlas (via Mongoose ODM)
 *   **Auth**: JWT (JSON Web Tokens) & Bcrypt.js
-*   **Third-party integration**: Google OAuth
 
 ---
 

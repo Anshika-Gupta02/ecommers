@@ -12,12 +12,17 @@ import {
   createPromoCode,
   togglePromoCodeStatus,
   deletePromoCode,
-  validatePromoCode
+  validatePromoCode,
+  getStoreSettings,
+  updateStoreSettings
 } from '../controllers/adminController.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 import { isAdmin } from '../middleware/adminMiddleware.js';
 
 const router = express.Router();
+
+// Public / Client Accessible endpoints
+router.get('/settings', getStoreSettings);
 
 // Authenticated checkout customer paths
 router.get('/validate-promo/:code', authenticateToken, validatePromoCode);
@@ -44,5 +49,8 @@ router.get('/promo-codes', getAllPromoCodes);
 router.post('/promo-codes', createPromoCode);
 router.put('/promo-codes/:id/toggle-status', togglePromoCodeStatus);
 router.delete('/promo-codes/:id', deletePromoCode);
+
+// Store Settings update
+router.put('/settings', updateStoreSettings);
 
 export default router;

@@ -9,7 +9,7 @@ import productRoutes from './routes/productRoutes.js';
 import cartRoutes from './routes/cartRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
-import { submitInquiry } from './controllers/adminController.js';
+import { submitInquiry, getStoreSettings } from './controllers/adminController.js';
 
 dotenv.config();
 
@@ -32,6 +32,7 @@ app.use('/api', productRoutes); // Includes /products and /categories
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
+app.get('/api/settings', getStoreSettings);
 app.post('/api/contact', submitInquiry);
 
 // Base route

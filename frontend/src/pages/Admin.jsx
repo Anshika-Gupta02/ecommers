@@ -4,8 +4,9 @@ import Swal from 'sweetalert2';
 import { 
   TrendingUp, ShoppingBag, Users, Layers, 
   Plus, Edit, Trash2, X, RefreshCw, Check,
-  Mail, Tag, ShieldAlert, ToggleLeft, ToggleRight, UserCog
+  Mail, Tag, ShieldAlert, ToggleLeft, ToggleRight, UserCog, Settings
 } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 export default function Admin({ setPage }) {
   const { token, user, isAuthenticated } = useAuth();
@@ -21,8 +22,60 @@ export default function Admin({ setPage }) {
   const [usersList, setUsersList] = useState([]);
   const [inquiriesList, setInquiriesList] = useState([]);
   const [promoList, setPromoList] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Store Settings States
+  const { settings, updateSettings } = useSettings();
+  const [settingsStoreName, setSettingsStoreName] = useState('');
+  const [settingsLogoUrl, setSettingsLogoUrl] = useState('');
+  const [settingsTagline, setSettingsTagline] = useState('');
+  const [settingsContactEmail, setSettingsContactEmail] = useState('');
+  const [settingsPhone, setSettingsPhone] = useState('');
+  const [settingsAddress, setSettingsAddress] = useState('');
+  const [savingSettings, setSavingSettings] = useState(false);
+
+  useEffect(() => {
+    if (settings) {
+      setSettingsStoreName(settings.store_name || "ANSHIKA'S STORE");
+      setSettingsLogoUrl(settings.logo_url || '');
+      setSettingsTagline(settings.tagline || 'Luxury Linens & Home Comfort');
+      setSettingsContactEmail(settings.contact_email || 'support@anshikastore.com');
+      setSettingsPhone(settings.phone || '+1 (800) 555-0199');
+      setSettingsAddress(settings.address || '742 Botanical Way, Suite 400, New York, NY 10013');
+    }
+  }, [settings]);
+
+  const handleSaveStoreSettings = async (e) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    try {
+      await updateSettings({
+        store_name: settingsStoreName,
+        logo_url: settingsLogoUrl,
+        tagline: settingsTagline,
+        contact_email: settingsContactEmail,
+        phone: settingsPhone,
+        address: settingsAddress
+      }, token);
+
+      Swal.fire({
+        title: 'Branding Updated!',
+        text: 'Store Name, Logo, and Details have been updated live across the entire storefront.',
+        icon: 'success',
+        confirmButtonColor: '#3D4A3E'
+      });
+    } catch (err) {
+      console.error('Save settings error:', err);
+      Swal.fire({
+        title: 'Error!',
+        text: err.message || 'Failed to update store settings.',
+        icon: 'error',
+        confirmButtonColor: '#3D4A3E'
+      });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   // Promo code states
   const [showPromoModal, setShowPromoModal] = useState(false);
@@ -641,6 +694,12 @@ export default function Admin({ setPage }) {
         >
           <Tag size={16} /> Promo Coupons
         </button>
+        <button 
+          className={`admin-tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
+          onClick={() => setActiveTab('settings')}
+        >
+          <Settings size={16} /> Store Settings & Logo
+        </button>
       </div>
 
       {loading ? (
@@ -986,6 +1045,141 @@ export default function Admin({ setPage }) {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 7: STORE BRANDING & SETTINGS */}
+          {activeTab === 'settings' && (
+            <div className="settings-tab-content animate-fade-only">
+              <div className="admin-section-header">
+                <div>
+                  <h2 className="admin-section-title">Store & Brand Settings</h2>
+                  <p className="admin-section-subtitle">Customize dynamic company name, logo URL, tagline, and contact information across the storefront.</p>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '2rem', marginTop: '1.5rem' }}>
+                <form onSubmit={handleSaveStoreSettings} style={{ backgroundColor: '#fff', border: '1px solid var(--color-border)', padding: '2rem', boxShadow: 'var(--shadow-small)' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.8rem', color: 'var(--color-primary)' }}>
+                    Brand Identity & Company Details
+                  </h3>
+
+                  <div className="form-group">
+                    <label className="form-label">Company / Store Name *</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      value={settingsStoreName}
+                      onChange={(e) => setSettingsStoreName(e.target.value)}
+                      placeholder="e.g. ANSHIKA'S STORE"
+                      required
+                    />
+                    <small style={{ color: 'var(--color-muted)', fontSize: '0.78rem', marginTop: '0.3rem', display: 'block' }}>
+                      This name will update dynamically across the Navbar, Footer, and page titles.
+                    </small>
+                  </div>
+
+                  <div className="form-group" style={{ marginTop: '1.2rem' }}>
+                    <label className="form-label">Logo Image URL</label>
+                    <input 
+                      type="url" 
+                      className="form-input" 
+                      value={settingsLogoUrl}
+                      onChange={(e) => setSettingsLogoUrl(e.target.value)}
+                      placeholder="https://example.com/logo.png"
+                    />
+                    <small style={{ color: 'var(--color-muted)', fontSize: '0.78rem', marginTop: '0.3rem', display: 'block' }}>
+                      Enter a direct image link (PNG, SVG, JPG). Leave blank to display stylized text logo.
+                    </small>
+                  </div>
+
+                  <div className="form-group" style={{ marginTop: '1.2rem' }}>
+                    <label className="form-label">Brand Tagline / Subtitle</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      value={settingsTagline}
+                      onChange={(e) => setSettingsTagline(e.target.value)}
+                      placeholder="e.g. Luxury Linens & Home Comfort"
+                    />
+                  </div>
+
+                  <div className="checkout-fields-row" style={{ marginTop: '1.2rem' }}>
+                    <div className="form-group flex-1">
+                      <label className="form-label">Support Email</label>
+                      <input 
+                        type="email" 
+                        className="form-input" 
+                        value={settingsContactEmail}
+                        onChange={(e) => setSettingsContactEmail(e.target.value)}
+                        placeholder="support@anshikastore.com"
+                      />
+                    </div>
+                    <div className="form-group flex-1">
+                      <label className="form-label">Support Phone</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        value={settingsPhone}
+                        onChange={(e) => setSettingsPhone(e.target.value)}
+                        placeholder="+1 (800) 555-0199"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group" style={{ marginTop: '1.2rem' }}>
+                    <label className="form-label">HQ Office Address</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      value={settingsAddress}
+                      onChange={(e) => setSettingsAddress(e.target.value)}
+                      placeholder="742 Botanical Way, Suite 400, New York, NY 10013"
+                    />
+                  </div>
+
+                  <button type="submit" className="btn-primary" style={{ marginTop: '1.8rem', width: '100%', padding: '0.9rem' }} disabled={savingSettings}>
+                    {savingSettings ? 'Saving Settings...' : 'Save & Update Store Branding'}
+                  </button>
+                </form>
+
+                {/* Live Brand Preview Card */}
+                <div style={{ backgroundColor: '#fff', border: '1px solid var(--color-border)', padding: '1.8rem', height: 'fit-content', boxShadow: 'var(--shadow-small)' }}>
+                  <h4 style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1.2rem', color: 'var(--color-primary)' }}>
+                    Live Brand Preview
+                  </h4>
+                  
+                  <div style={{ border: '1px dashed var(--color-border)', padding: '1.5rem', textAlign: 'center', backgroundColor: 'var(--color-bg-alt)', marginBottom: '1.2rem', minHeight: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {settingsLogoUrl ? (
+                      <img 
+                        src={settingsLogoUrl} 
+                        alt="Logo Preview" 
+                        style={{ maxHeight: '48px', maxWidth: '100%', objectFit: 'contain' }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 600, letterSpacing: '0.12em', color: 'var(--color-primary)' }}>
+                          {settingsStoreName ? settingsStoreName.split(' ')[0] : "ANSHIKA'S"}
+                        </div>
+                        <div style={{ fontSize: '0.65rem', letterSpacing: '0.3em', color: 'var(--color-muted)' }}>
+                          {settingsStoreName && settingsStoreName.split(' ').length > 1 ? settingsStoreName.split(' ').slice(1).join(' ') : "STORE"}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ fontSize: '0.82rem', color: 'var(--color-muted)', lineHeight: '1.6' }}>
+                    <p style={{ fontWeight: 600, color: 'var(--color-primary)', fontSize: '0.95rem', marginBottom: '0.2rem' }}>{settingsStoreName || "Store Name"}</p>
+                    <p style={{ fontStyle: 'italic', marginBottom: '0.8rem' }}>{settingsTagline || "Tagline"}</p>
+                    <p style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}><span>📧</span> {settingsContactEmail || "N/A"}</p>
+                    <p style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginTop: '0.2rem' }}><span>📞</span> {settingsPhone || "N/A"}</p>
+                    <p style={{ display: 'flex', gap: '0.4rem', alignItems: 'flex-start', marginTop: '0.2rem' }}><span>📍</span> {settingsAddress || "N/A"}</p>
+                  </div>
+                </div>
               </div>
             </div>
           )}

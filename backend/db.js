@@ -21,16 +21,21 @@ export async function connectDB() {
     }
 
     if (!MONGO_URI) {
-      throw new Error('MONGO_URI is missing in backend/.env');
+      console.warn('⚠️ MONGO_URI missing in backend/.env');
+      return null;
     }
 
-    // Connect to MongoDB / MongoDB Atlas
-    const conn = await mongoose.connect(MONGO_URI);
+    // Connect to MongoDB Atlas with optimized timeouts (5s server selection)
+    const conn = await mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
     console.log(`✅ MongoDB Atlas connected successfully: ${conn.connection.host}`);
     return conn.connection;
   } catch (error) {
     console.error(`❌ MongoDB Connection Error: ${error.message}`);
-    console.warn(`💡 Note: Please check your MONGO_URI in backend/.env.`);
+    console.warn(`💡 Note: Please verify MONGO_URI and password in backend/.env.`);
+    return null;
   }
 }
 

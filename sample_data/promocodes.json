@@ -1,0 +1,22 @@
+[
+  {
+    "code": "LINEN10",
+    "discount_percent": 10,
+    "is_active": true
+  },
+  {
+    "code": "WELCOME20",
+    "discount_percent": 20,
+    "is_active": true
+  },
+  {
+    "code": "SPRING15",
+    "discount_percent": 15,
+    "is_active": true
+  },
+  {
+    "code": "EXPIRED5",
+    "discount_percent": 5,
+    "is_active": false
+  }
+]

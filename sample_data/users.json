@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Anshika Admin",
+    "email": "admin@anshika.com",
+    "password_plain": "adminpassword",
+    "role": "admin"
+  },
+  {
+    "name": "Jane Doe",
+    "email": "customer@gmail.com",
+    "password_plain": "password123",
+    "role": "customer"
+  }
+]
