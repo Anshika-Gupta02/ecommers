@@ -1,18 +1,32 @@
-import pool from '../db.js';
+import CartItem from '../models/CartItem.js';
+import Product from '../models/Product.js';
+import mongoose from 'mongoose';
 
 export async function getCart(req, res) {
   const userId = req.user.id;
 
   try {
-    const [cartItems] = await pool.execute(`
-      SELECT ci.*, p.name, p.price, pi.image_url AS primary_image
-      FROM cart_items ci
-      JOIN products p ON ci.product_id = p.id
-      LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
-      WHERE ci.user_id = ?
-    `, [userId]);
+    const cartItems = await CartItem.find({ user: userId }).populate('product');
 
-    res.json(cartItems);
+    const formattedCart = cartItems.map(item => {
+      const p = item.product;
+      const primaryImg = p && p.images && p.images.length > 0
+        ? (p.images.find(i => i.is_primary)?.image_url || p.images[0].image_url)
+        : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=600';
+
+      return {
+        id: item._id.toString(),
+        user_id: item.user.toString(),
+        product_id: p ? p._id.toString() : null,
+        name: p ? p.name : 'Product Unavailable',
+        price: p ? p.price : 0,
+        selected_size: item.selected_size,
+        quantity: item.quantity,
+        primary_image: primaryImg
+      };
+    });
+
+    res.json(formattedCart);
   } catch (error) {
     console.error('Fetch cart error:', error);
     res.status(500).json({ message: 'Server error fetching cart' });
@@ -28,27 +42,35 @@ export async function addToCart(req, res) {
   }
 
   try {
-    // Check if the item already exists in the cart with the same size
-    const [existingItems] = await pool.execute(
-      'SELECT id, quantity FROM cart_items WHERE user_id = ? AND product_id = ? AND selected_size = ?',
-      [userId, product_id, selected_size]
-    );
+    if (!mongoose.Types.ObjectId.isValid(product_id)) {
+      return res.status(400).json({ message: 'Invalid product ID' });
+    }
 
-    if (existingItems.length > 0) {
-      // Update quantity
-      const newQuantity = existingItems[0].quantity + Number(quantity);
-      await pool.execute(
-        'UPDATE cart_items SET quantity = ? WHERE id = ?',
-        [newQuantity, existingItems[0].id]
-      );
-      res.json({ message: 'Cart item quantity updated', itemId: existingItems[0].id });
+    const product = await Product.findById(product_id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // Check existing item
+    let existingItem = await CartItem.findOne({
+      user: userId,
+      product: product_id,
+      selected_size
+    });
+
+    if (existingItem) {
+      existingItem.quantity += Number(quantity);
+      await existingItem.save();
+      res.json({ message: 'Cart item quantity updated', itemId: existingItem._id.toString() });
     } else {
-      // Insert new item
-      const [result] = await pool.execute(
-        'INSERT INTO cart_items (user_id, product_id, selected_size, quantity) VALUES (?, ?, ?, ?)',
-        [userId, product_id, selected_size, quantity]
-      );
-      res.status(201).json({ message: 'Item added to cart', itemId: result.insertId });
+      const cartItem = new CartItem({
+        user: userId,
+        product: product_id,
+        selected_size,
+        quantity: Number(quantity)
+      });
+      await cartItem.save();
+      res.status(201).json({ message: 'Item added to cart', itemId: cartItem._id.toString() });
     }
   } catch (error) {
     console.error('Add to cart error:', error);
@@ -66,13 +88,20 @@ export async function updateCartItemQuantity(req, res) {
   }
 
   try {
-    // Verify item ownership
-    const [items] = await pool.execute('SELECT id FROM cart_items WHERE id = ? AND user_id = ?', [id, userId]);
-    if (items.length === 0) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(404).json({ message: 'Cart item not found' });
     }
 
-    await pool.execute('UPDATE cart_items SET quantity = ? WHERE id = ?', [quantity, id]);
+    const item = await CartItem.findOneAndUpdate(
+      { _id: id, user: userId },
+      { quantity: Number(quantity) },
+      { new: true }
+    );
+
+    if (!item) {
+      return res.status(404).json({ message: 'Cart item not found' });
+    }
+
     res.json({ message: 'Cart item updated' });
   } catch (error) {
     console.error('Update cart item error:', error);
@@ -85,13 +114,15 @@ export async function removeFromCart(req, res) {
   const { id } = req.params;
 
   try {
-    // Verify item ownership
-    const [items] = await pool.execute('SELECT id FROM cart_items WHERE id = ? AND user_id = ?', [id, userId]);
-    if (items.length === 0) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(404).json({ message: 'Cart item not found' });
     }
 
-    await pool.execute('DELETE FROM cart_items WHERE id = ?', [id]);
+    const item = await CartItem.findOneAndDelete({ _id: id, user: userId });
+    if (!item) {
+      return res.status(404).json({ message: 'Cart item not found' });
+    }
+
     res.json({ message: 'Item removed from cart' });
   } catch (error) {
     console.error('Remove from cart error:', error);

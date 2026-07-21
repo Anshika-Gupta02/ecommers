@@ -1,9 +1,16 @@
-import pool from '../db.js';
+import Product from '../models/Product.js';
+import Category from '../models/Category.js';
+import mongoose from 'mongoose';
 
 export async function getCategories(req, res) {
   try {
-    const [categories] = await pool.execute('SELECT * FROM categories');
-    res.json(categories);
+    const categories = await Category.find({});
+    res.json(categories.map(c => ({
+      id: c._id.toString(),
+      name: c.name,
+      description: c.description,
+      image_url: c.image_url
+    })));
   } catch (error) {
     console.error('Fetch categories error:', error);
     res.status(500).json({ message: 'Server error fetching categories' });
@@ -14,51 +21,60 @@ export async function getProducts(req, res) {
   const { category, search, sort } = req.query;
 
   try {
-    let sql = `
-      SELECT p.*, c.name AS category_name, pi.image_url AS primary_image
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
-    `;
-    const params = [];
-    const conditions = [];
+    const filter = {};
 
     // Filter by Category Name or ID
     if (category) {
-      if (isNaN(category)) {
-        conditions.push('c.name = ?');
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        filter.category = category;
       } else {
-        conditions.push('p.category_id = ?');
+        const catObj = await Category.findOne({ name: new RegExp(`^${category}$`, 'i') });
+        if (catObj) {
+          filter.category = catObj._id;
+        } else {
+          // If category not found by name, return empty result
+          return res.json([]);
+        }
       }
-      params.push(category);
     }
 
     // Search filter
     if (search) {
-      conditions.push('(p.name LIKE ? OR p.description LIKE ?)');
-      params.push(`%${search}%`, `%${search}%`);
-    }
-
-    if (conditions.length > 0) {
-      sql += ' WHERE ' + conditions.join(' AND ');
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
     }
 
     // Sorting
+    let sortOption = { created_at: -1 };
     if (sort === 'price-asc') {
-      sql += ' ORDER BY p.price ASC';
+      sortOption = { price: 1 };
     } else if (sort === 'price-desc') {
-      sql += ' ORDER BY p.price DESC';
-    } else {
-      sql += ' ORDER BY p.created_at DESC';
+      sortOption = { price: -1 };
     }
 
-    const [products] = await pool.execute(sql, params);
-    
-    // Parse size_options if they are returned as string
-    const formattedProducts = products.map(p => ({
-      ...p,
-      size_options: typeof p.size_options === 'string' ? JSON.parse(p.size_options) : p.size_options
-    }));
+    const products = await Product.find(filter).populate('category').sort(sortOption);
+
+    const formattedProducts = products.map(p => {
+      const primaryImg = p.images && p.images.length > 0
+        ? (p.images.find(i => i.is_primary)?.image_url || p.images[0].image_url)
+        : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=600';
+
+      return {
+        id: p._id.toString(),
+        category_id: p.category ? p.category._id.toString() : null,
+        category_name: p.category ? p.category.name : 'Uncategorized',
+        name: p.name,
+        description: p.description,
+        price: p.price,
+        size_options: Array.isArray(p.size_options) ? p.size_options : ["XS", "S", "M", "L"],
+        details: p.details,
+        primary_image: primaryImg,
+        images: p.images,
+        created_at: p.created_at
+      };
+    });
 
     res.json(formattedProducts);
   } catch (error) {
@@ -71,26 +87,34 @@ export async function getProductById(req, res) {
   const { id } = req.params;
 
   try {
-    const [products] = await pool.execute(`
-      SELECT p.*, c.name AS category_name
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.id = ?
-    `, [id]);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid product ID format' });
+    }
 
-    if (products.length === 0) {
+    const product = await Product.findById(id).populate('category');
+
+    if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    const [images] = await pool.execute(`
-      SELECT id, image_url, is_primary FROM product_images WHERE product_id = ?
-    `, [id]);
+    const formattedImages = product.images.map((img, idx) => ({
+      id: img._id ? img._id.toString() : idx + 1,
+      image_url: img.image_url,
+      is_primary: img.is_primary ? 1 : 0
+    }));
 
-    const product = products[0];
-    product.images = images;
-    product.size_options = typeof product.size_options === 'string' ? JSON.parse(product.size_options) : product.size_options;
-
-    res.json(product);
+    res.json({
+      id: product._id.toString(),
+      category_id: product.category ? product.category._id.toString() : null,
+      category_name: product.category ? product.category.name : 'Uncategorized',
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      size_options: Array.isArray(product.size_options) ? product.size_options : ["XS", "S", "M", "L"],
+      details: product.details,
+      images: formattedImages,
+      created_at: product.created_at
+    });
   } catch (error) {
     console.error('Fetch product by id error:', error);
     res.status(500).json({ message: 'Server error fetching product details' });
@@ -104,48 +128,46 @@ export async function createProduct(req, res) {
     return res.status(400).json({ message: 'Name, price, and category are required' });
   }
 
-  const connection = await pool.getConnection();
-
   try {
-    await connection.beginTransaction();
-
-    const sizesString = Array.isArray(size_options) ? JSON.stringify(size_options) : size_options || '["XS","S","M","L"]';
-    
-    // 1. Insert product
-    const [productResult] = await connection.execute(
-      'INSERT INTO products (category_id, name, description, price, size_options, details) VALUES (?, ?, ?, ?, ?, ?)',
-      [category_id, name, description || '', price, sizesString, details || '']
-    );
-
-    const productId = productResult.insertId;
-
-    // 2. Insert images
-    if (images && images.length > 0) {
-      const imgArray = Array.isArray(images) ? images : [images];
-      for (let i = 0; i < imgArray.length; i++) {
-        const imgUrl = typeof imgArray[i] === 'object' ? imgArray[i].image_url : imgArray[i];
-        const isPrimary = typeof imgArray[i] === 'object' ? (imgArray[i].is_primary ? 1 : 0) : (i === 0 ? 1 : 0);
-        
-        await connection.execute(
-          'INSERT INTO product_images (product_id, image_url, is_primary) VALUES (?, ?, ?)',
-          [productId, imgUrl, isPrimary]
-        );
-      }
+    let categoryObjId = null;
+    if (mongoose.Types.ObjectId.isValid(category_id)) {
+      categoryObjId = category_id;
     } else {
-      // Insert placeholder
-      await connection.execute(
-        'INSERT INTO product_images (product_id, image_url, is_primary) VALUES (?, ?, ?)',
-        [productId, 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=600', 1]
-      );
+      const cat = await Category.findOne({ name: category_id });
+      if (cat) categoryObjId = cat._id;
     }
 
-    await connection.commit();
-    connection.release();
+    const formattedImages = [];
+    if (images && images.length > 0) {
+      const imgArray = Array.isArray(images) ? images : [images];
+      imgArray.forEach((img, index) => {
+        const url = typeof img === 'object' ? img.image_url : img;
+        const isPrimary = typeof img === 'object' ? Boolean(img.is_primary) : (index === 0);
+        formattedImages.push({ image_url: url, is_primary: isPrimary });
+      });
+    } else {
+      formattedImages.push({
+        image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=600',
+        is_primary: true
+      });
+    }
 
-    res.status(201).json({ message: 'Product created successfully', productId });
+    const parsedSizes = typeof size_options === 'string' ? JSON.parse(size_options) : (Array.isArray(size_options) ? size_options : ["XS", "S", "M", "L"]);
+
+    const product = new Product({
+      category: categoryObjId,
+      name,
+      description: description || '',
+      price: Number(price),
+      size_options: parsedSizes,
+      details: details || '',
+      images: formattedImages
+    });
+
+    await product.save();
+
+    res.status(201).json({ message: 'Product created successfully', productId: product._id.toString() });
   } catch (error) {
-    await connection.rollback();
-    connection.release();
     console.error('Create product error:', error);
     res.status(500).json({ message: 'Server error creating product' });
   }
@@ -159,48 +181,42 @@ export async function updateProduct(req, res) {
     return res.status(400).json({ message: 'Name, price, and category are required' });
   }
 
-  const connection = await pool.getConnection();
-
   try {
-    await connection.beginTransaction();
-
-    const sizesString = Array.isArray(size_options) ? JSON.stringify(size_options) : size_options || '["XS","S","M","L"]';
-
-    // 1. Update product details
-    const [result] = await connection.execute(
-      'UPDATE products SET category_id = ?, name = ?, description = ?, price = ?, size_options = ?, details = ? WHERE id = ?',
-      [category_id, name, description || '', price, sizesString, details || '', id]
-    );
-
-    if (result.affectedRows === 0) {
-      connection.release();
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    // 2. Update images if provided
-    if (images) {
-      // Clear old images
-      await connection.execute('DELETE FROM product_images WHERE product_id = ?', [id]);
+    const updateFields = {
+      name,
+      description: description || '',
+      price: Number(price),
+      details: details || ''
+    };
 
-      const imgArray = Array.isArray(images) ? images : [images];
-      for (let i = 0; i < imgArray.length; i++) {
-        const imgUrl = typeof imgArray[i] === 'object' ? imgArray[i].image_url : imgArray[i];
-        const isPrimary = typeof imgArray[i] === 'object' ? (imgArray[i].is_primary ? 1 : 0) : (i === 0 ? 1 : 0);
-
-        await connection.execute(
-          'INSERT INTO product_images (product_id, image_url, is_primary) VALUES (?, ?, ?)',
-          [id, imgUrl, isPrimary]
-        );
-      }
+    if (mongoose.Types.ObjectId.isValid(category_id)) {
+      updateFields.category = category_id;
     }
 
-    await connection.commit();
-    connection.release();
+    if (size_options) {
+      updateFields.size_options = typeof size_options === 'string' ? JSON.parse(size_options) : size_options;
+    }
+
+    if (images) {
+      const imgArray = Array.isArray(images) ? images : [images];
+      updateFields.images = imgArray.map((img, index) => ({
+        image_url: typeof img === 'object' ? img.image_url : img,
+        is_primary: typeof img === 'object' ? Boolean(img.is_primary) : (index === 0)
+      }));
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(id, updateFields, { new: true });
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
 
     res.json({ message: 'Product updated successfully' });
   } catch (error) {
-    await connection.rollback();
-    connection.release();
     console.error('Update product error:', error);
     res.status(500).json({ message: 'Server error updating product' });
   }
@@ -210,14 +226,18 @@ export async function deleteProduct(req, res) {
   const { id } = req.params;
 
   try {
-    const [result] = await pool.execute('DELETE FROM products WHERE id = ?', [id]);
-    if (result.affectedRows === 0) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(404).json({ message: 'Product not found' });
     }
+
+    const product = await Product.findByIdAndDelete(id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {
     console.error('Delete product error:', error);
     res.status(500).json({ message: 'Server error deleting product' });
   }
 }
-

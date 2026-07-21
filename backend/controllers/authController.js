@@ -1,4 +1,4 @@
-import pool from '../db.js';
+import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
@@ -39,29 +39,32 @@ export async function register(req, res) {
   }
 
   try {
-    const [existingUsers] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
-    if (existingUsers.length > 0) {
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
       return res.status(400).json({ message: 'User with this email already exists' });
     }
 
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    const [result] = await pool.execute(
-      'INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)',
-      [name, email, passwordHash]
-    );
+    const user = new User({
+      name,
+      email: email.toLowerCase(),
+      password_hash: passwordHash,
+      role: 'customer'
+    });
 
-    const userId = result.insertId;
-    const token = jwt.sign({ id: userId, email, role: 'customer' }, JWT_SECRET, { expiresIn: '7d' });
+    await user.save();
+
+    const token = jwt.sign({ id: user._id.toString(), email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 
     res.status(201).json({
       token,
       user: {
-        id: userId,
-        name,
-        email,
-        role: 'customer'
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role
       }
     });
   } catch (error) {
@@ -78,23 +81,22 @@ export async function login(req, res) {
   }
 
   try {
-    const [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
-    if (users.length === 0) {
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const user = users[0];
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id.toString(), email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 
     res.json({
       token,
       user: {
-        id: user.id,
+        id: user._id.toString(),
         name: user.name,
         email: user.email,
         role: user.role
@@ -108,11 +110,17 @@ export async function login(req, res) {
 
 export async function getMe(req, res) {
   try {
-    const [users] = await pool.execute('SELECT id, name, email, role, created_at FROM users WHERE id = ?', [req.user.id]);
-    if (users.length === 0) {
+    const user = await User.findById(req.user.id).select('-password_hash');
+    if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(users[0]);
+    res.json({
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      created_at: user.created_at
+    });
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ message: 'Server error fetching user profile' });
@@ -131,11 +139,9 @@ export async function googleLogin(req, res) {
     let name = '';
 
     if (id_token === "MOCK_GOOGLE_TOKEN_ANSHIKA_STORE") {
-      // Mock Google Login User
       email = 'demo_google_user@gmail.com';
       name = 'Anshika Google Demo';
     } else {
-      // Call Google API to verify the ID token
       try {
         const payload = await verifyGoogleToken(id_token);
         email = payload.email;
@@ -149,37 +155,28 @@ export async function googleLogin(req, res) {
       return res.status(400).json({ message: 'Could not fetch email from Google account' });
     }
 
-    // Check database
-    const [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
-    let user;
+    let user = await User.findOne({ email: email.toLowerCase() });
 
-    if (users.length > 0) {
-      user = users[0];
-    } else {
-      // Create user
+    if (!user) {
       const randomPassword = Math.random().toString(36).substring(2, 15);
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(randomPassword, salt);
 
-      const [result] = await pool.execute(
-        'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
-        [name, email, passwordHash, 'customer']
-      );
-
-      user = {
-        id: result.insertId,
+      user = new User({
         name,
-        email,
+        email: email.toLowerCase(),
+        password_hash: passwordHash,
         role: 'customer'
-      };
+      });
+      await user.save();
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id.toString(), email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 
     res.json({
       token,
       user: {
-        id: user.id,
+        id: user._id.toString(),
         name: user.name,
         email: user.email,
         role: user.role
