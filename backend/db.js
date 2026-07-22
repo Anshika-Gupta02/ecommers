@@ -25,7 +25,12 @@ export async function connectDB() {
     // Disable query buffering so queries fail fast if the connection is down
     mongoose.set('bufferCommands', false);
 
-    if (mongoose.connection.readyState >= 1) {
+    if (mongoose.connection.readyState === 1) {
+      return mongoose.connection;
+    }
+
+    if (mongoose.connection.readyState === 2) {
+      await mongoose.connection.asPromise();
       return mongoose.connection;
     }
 
