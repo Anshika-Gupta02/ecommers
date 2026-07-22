@@ -19,6 +19,8 @@ import { submitInquiry, getStoreSettings } from './controllers/adminController.j
 
 dotenv.config();
 
+await connectDB();
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -32,16 +34,6 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Serve static uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Ensure Database Connection on Serverless Executions
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-  } catch (err) {
-    console.error('DB Connection Middleware Error:', err);
-  }
-  next();
-});
 
 // Routes Mount
 app.use('/api/auth', authRoutes);

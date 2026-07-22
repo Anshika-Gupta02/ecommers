@@ -1,8 +1,5 @@
 import express from 'express';
 import multer from 'multer';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { 
   getAllOrders, 
   updateOrderStatus, 
@@ -23,25 +20,8 @@ import {
 import { authenticateToken } from '../middleware/authMiddleware.js';
 import { isAdmin } from '../middleware/adminMiddleware.js';
 
-// Resolve __dirname in ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Configure disk storage for Multer
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const dir = path.join(__dirname, '../uploads');
-    if (!fs.existsSync(dir)){
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    cb(null, dir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
-  }
-});
+// Store uploads in memory so the same code works in local dev and Vercel.
+const storage = multer.memoryStorage();
 
 // Configure upload middleware with limits and file filters
 const upload = multer({ 
@@ -103,11 +83,13 @@ router.post('/upload', (req, res, next) => {
     if (!req.file) {
       return res.status(400).json({ message: 'Please upload an image file.' });
     }
-    // Return relative URL path
-    const relativeUrl = `/uploads/${req.file.filename}`;
+
+    const mimeType = req.file.mimetype || 'image/jpeg';
+    const base64Image = req.file.buffer.toString('base64');
+    const dataUrl = `data:${mimeType};base64,${base64Image}`;
     res.json({
       message: 'Image uploaded successfully.',
-      url: relativeUrl
+      url: dataUrl
     });
   });
 });

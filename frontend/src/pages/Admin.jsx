@@ -3,7 +3,7 @@ import { useAuth, API_URL } from '../context/AuthContext';
 import Swal from 'sweetalert2';
 import { 
   TrendingUp, ShoppingBag, Users, Layers, 
-  Plus, Edit, Trash2, X, RefreshCw, Check,
+  Plus, Edit, Trash2, X, RefreshCw,
   Mail, Tag, ShieldAlert, ToggleLeft, ToggleRight, UserCog, Settings
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
@@ -13,7 +13,7 @@ export default function Admin({ setPage }) {
 
   const resolveImageUrl = (url) => {
     if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) {
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
       return url;
     }
     const backendBase = API_URL.replace('/api', '');

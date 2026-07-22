@@ -40,9 +40,8 @@ ecommers/
 │   ├── controllers/          # Business logic handlers
 │   ├── routes/               # API endpoints setup
 │   ├── middleware/           # Auth validation and error handler
-│   ├── db.js                 # MySQL Connection Pool
-│   ├── schema.sql            # Database DDL structure
-│   ├── seed.js               # Mock database seeder
+│   ├── db.js                 # MongoDB connection helper
+│   ├── seed-mongo.js         # Mock database seeder
 │   └── index.js              # Server entrypoint
 │
 ├── frontend/                 # React + Vite frontend SPA
@@ -67,7 +66,7 @@ ecommers/
 ### Prerequisites
 Make sure you have the following installed on your system:
 *   [Node.js](https://nodejs.org/) (v16+ recommended)
-*   [MySQL Server](https://www.mysql.com/downloads/)
+*   [MongoDB Atlas](https://www.mongodb.com/atlas) or a local MongoDB instance
 
 ### Step 1: Install Dependencies
 Open your terminal in the root directory of this repository and run:
@@ -77,17 +76,8 @@ npm run install:all
 *This command runs `npm install` inside both the `frontend/` and `backend/` directories.*
 
 ### Step 2: Database Setup
-1. Open your MySQL client and create a database named `anshika_store_db`:
-   ```sql
-   CREATE DATABASE IF NOT EXISTS `anshika_store_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
-2. Import the schema tables:
-   ```bash
-   mysql -u root -p anshika_store_db < backend/schema.sql
-   ```
-   *(Alternatively, copy and run the contents of [schema.sql](backend/schema.sql) directly in your MySQL database client).*
-
-3. Run the database seed script to populate mock products and categories:
+1. Create a MongoDB database and copy its connection string.
+2. Run the database seed script to populate mock products and categories:
    ```bash
    npm run seed
    ```
@@ -96,12 +86,8 @@ npm run install:all
 Create a `.env` file in the `backend/` folder and configure the variables:
 ```env
 PORT=5000
-DB_HOST=localhost
-DB_USER=your_mysql_username
-DB_PASSWORD=your_mysql_password
-DB_NAME=anshika_store_db
+MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret_key
-GOOGLE_CLIENT_ID=your_google_client_id
 ```
 
 ### Step 4: Run the Application
@@ -129,5 +115,8 @@ When deploying this repository to Vercel, use the following configuration:
 Choose a platform that supports continuous Express/Node.js hosting (e.g., Render Web Services):
 1. Point your deployment root to the **`backend`** directory.
 2. Select the Node.js runtime environment.
-3. Configure the environment variables matching your production database (e.g. host, user, password, database name, and secrets).
-4. Provide a hosted MySQL server (e.g., Aiven, Tidb Cloud, or Clever Cloud).
+3. Configure `MONGO_URI` and `JWT_SECRET` in the production environment.
+4. Use the hosted MongoDB cluster connection string from Atlas.
+
+### 3. Fullstack on Vercel
+If you deploy the whole repo to Vercel, keep the `frontend` project root and let the backend run through the `api/index.js` serverless entrypoint. Set `VITE_API_URL` to the deployed backend path or leave it unset when the frontend and API share the same domain.

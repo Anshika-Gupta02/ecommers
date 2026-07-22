@@ -18,13 +18,14 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
+mongoose.set('bufferCommands', false);
+
+let connectionPromise = null;
+
 export async function connectDB() {
   const MONGO_URI = process.env.MONGO_URI;
 
   try {
-    // Disable query buffering so queries fail fast if the connection is down
-    mongoose.set('bufferCommands', false);
-
     if (mongoose.connection.readyState === 1) {
       return mongoose.connection;
     }
@@ -34,19 +35,28 @@ export async function connectDB() {
       return mongoose.connection;
     }
 
+    if (connectionPromise) {
+      await connectionPromise;
+      return mongoose.connection;
+    }
+
     if (!MONGO_URI) {
       console.warn('⚠️ MONGO_URI missing in environment variables');
       return null;
     }
 
-    // Connect to MongoDB Atlas with optimized timeouts (5s server selection)
-    const conn = await mongoose.connect(MONGO_URI, {
+    // Connect once and reuse the same promise for concurrent requests.
+    connectionPromise = mongoose.connect(MONGO_URI, {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     });
+
+    const conn = await connectionPromise;
+    connectionPromise = null;
     console.log(`✅ MongoDB Atlas connected successfully: ${conn.connection.host}`);
     return conn.connection;
   } catch (error) {
+    connectionPromise = null;
     console.error(`❌ MongoDB Connection Error: ${error.message}`);
     return null;
   }
