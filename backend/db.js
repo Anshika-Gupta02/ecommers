@@ -22,6 +22,9 @@ export async function connectDB() {
   const MONGO_URI = process.env.MONGO_URI;
 
   try {
+    // Disable query buffering so queries fail fast if the connection is down
+    mongoose.set('bufferCommands', false);
+
     if (mongoose.connection.readyState >= 1) {
       return mongoose.connection;
     }
