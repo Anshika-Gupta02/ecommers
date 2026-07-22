@@ -388,20 +388,50 @@ export default function Navbar({ setPage, currentPage }) {
           }
           .nav-toggle {
             display: block;
-            width: 20%;
+            width: auto;
             text-align: left;
+            padding: 0.5rem 0;
           }
           .nav-brand {
-            width: 60%;
+            flex-grow: 1;
+            width: auto;
+            text-align: center;
+            font-size: 1.5rem;
+          }
+          .brand-sub {
+            font-size: 0.5rem;
+            letter-spacing: 0.25em;
           }
           .nav-controls-right {
-            width: 20%;
+            width: auto;
+            gap: 1rem;
           }
           .nav-username {
             display: none;
           }
           .navbar {
             height: 75px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .nav-controls-right {
+            gap: 0.6rem;
+          }
+          .nav-brand {
+            font-size: 1.25rem;
+          }
+          .brand-sub {
+            font-size: 0.45rem;
+            letter-spacing: 0.2em;
+          }
+          .nav-brand img {
+            max-height: 32px !important;
+          }
+          select[title="Switch Currency"] {
+            font-size: 0.72rem !important;
+            padding: 0.15rem 0.3rem !important;
+            margin-right: 0.4rem !important;
           }
         }
       `}</style>

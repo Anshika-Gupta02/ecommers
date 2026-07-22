@@ -845,6 +845,26 @@ export default function Checkout({ setPage }) {
             order: -1;
           }
         }
+
+        @media (max-width: 600px) {
+          .checkout-section, .checkout-summary-panel {
+            padding: 1.25rem;
+          }
+          .checkout-fields-row {
+            flex-direction: column;
+            gap: 1rem;
+          }
+          .width-100 {
+            width: 100%;
+          }
+          .checkout-page-title {
+            font-size: 1.8rem;
+          }
+          .order-success-card {
+            padding: 2rem 1.5rem;
+            margin: 1rem auto;
+          }
+        }
       `}</style>
     </div>
   );

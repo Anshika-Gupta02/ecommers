@@ -292,6 +292,36 @@ export default function CartDrawer({ setPage }) {
         .checkout-btn {
           width: 100%;
         }
+
+        @media (max-width: 480px) {
+          .cart-drawer-header {
+            padding: 1.2rem 1.5rem;
+          }
+          .cart-drawer-items {
+            padding: 1.2rem 1.5rem;
+            gap: 1.2rem;
+          }
+          .cart-drawer-footer {
+            padding: 1.5rem;
+          }
+          .cart-item-row {
+            gap: 0.8rem;
+            padding-bottom: 1.2rem;
+          }
+          .cart-item-img {
+            width: 65px;
+            height: 88px;
+          }
+          .cart-item-name {
+            font-size: 0.88rem;
+          }
+          .cart-item-price-col {
+            min-width: 50px;
+          }
+          .cart-item-price {
+            font-size: 0.88rem;
+          }
+        }
       `}</style>
     </div>
   );

@@ -1746,6 +1746,19 @@ export default function Admin({ setPage }) {
             width: 100%;
             justify-content: center;
           }
+          .modal-overlay {
+            padding: 0.75rem;
+          }
+          .modal-form-body {
+            padding: 1.25rem;
+            gap: 1rem;
+          }
+          .modal-header {
+            padding: 1.2rem 1.25rem;
+          }
+          .admin-page-title {
+            font-size: 1.8rem;
+          }
         }
 
         .role-badge {
