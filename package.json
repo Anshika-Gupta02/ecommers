@@ -1,6 +1,7 @@
 {
   "name": "ecommerceecommerce-root",
   "version": "1.0.0",
+  "type": "module",
   "description": "Root workspace command to start  e-commerce store",
   "scripts": {
     "install:all": "npm install --prefix backend && npm install --prefix frontend",
