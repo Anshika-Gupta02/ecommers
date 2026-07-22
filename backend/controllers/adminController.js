@@ -6,6 +6,7 @@ import ContactInquiry from '../models/ContactInquiry.js';
 import PromoCode from '../models/PromoCode.js';
 import StoreSettings from '../models/StoreSettings.js';
 import mongoose from 'mongoose';
+import { formatImageUrl } from './productController.js';
 
 export async function getAllOrders(req, res) {
   try {
@@ -355,7 +356,11 @@ export async function getStoreSettings(req, res) {
       settings = new StoreSettings({});
       await settings.save();
     }
-    res.json(settings);
+    const responseSettings = settings.toObject();
+    if (responseSettings.logo_url) {
+      responseSettings.logo_url = formatImageUrl(responseSettings.logo_url, req);
+    }
+    res.json(responseSettings);
   } catch (error) {
     console.error('GetStoreSettings error:', error);
     res.status(500).json({ message: 'Server error fetching store settings' });
@@ -381,7 +386,12 @@ export async function updateStoreSettings(req, res) {
     settings.updated_at = new Date();
     await settings.save();
 
-    res.json({ message: 'Store settings updated successfully', settings });
+    const responseSettings = settings.toObject();
+    if (responseSettings.logo_url) {
+      responseSettings.logo_url = formatImageUrl(responseSettings.logo_url, req);
+    }
+
+    res.json({ message: 'Store settings updated successfully', settings: responseSettings });
   } catch (error) {
     console.error('UpdateStoreSettings error:', error);
     res.status(500).json({ message: 'Server error updating store settings' });

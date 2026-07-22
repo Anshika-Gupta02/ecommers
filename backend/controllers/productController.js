@@ -2,6 +2,15 @@ import Product from '../models/Product.js';
 import Category from '../models/Category.js';
 import mongoose from 'mongoose';
 
+export function formatImageUrl(url, req) {
+  if (!url) return url;
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+    return url;
+  }
+  const baseUrl = req.protocol + '://' + req.get('host');
+  return `${baseUrl}${url}`;
+}
+
 export async function getCategories(req, res) {
   try {
     const categories = await Category.find({});
@@ -9,7 +18,7 @@ export async function getCategories(req, res) {
       id: c._id.toString(),
       name: c.name,
       description: c.description,
-      image_url: c.image_url
+      image_url: formatImageUrl(c.image_url, req)
     })));
   } catch (error) {
     console.error('Fetch categories error:', error);
@@ -61,6 +70,11 @@ export async function getProducts(req, res) {
         ? (p.images.find(i => i.is_primary)?.image_url || p.images[0].image_url)
         : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=600';
 
+      const formattedImages = (p.images || []).map(img => ({
+        image_url: formatImageUrl(img.image_url, req),
+        is_primary: img.is_primary
+      }));
+
       return {
         id: p._id.toString(),
         category_id: p.category ? p.category._id.toString() : null,
@@ -70,8 +84,8 @@ export async function getProducts(req, res) {
         price: p.price,
         size_options: Array.isArray(p.size_options) ? p.size_options : ["XS", "S", "M", "L"],
         details: p.details,
-        primary_image: primaryImg,
-        images: p.images,
+        primary_image: formatImageUrl(primaryImg, req),
+        images: formattedImages,
         created_at: p.created_at
       };
     });
@@ -99,7 +113,7 @@ export async function getProductById(req, res) {
 
     const formattedImages = product.images.map((img, idx) => ({
       id: img._id ? img._id.toString() : idx + 1,
-      image_url: img.image_url,
+      image_url: formatImageUrl(img.image_url, req),
       is_primary: img.is_primary ? 1 : 0
     }));
 

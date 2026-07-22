@@ -11,6 +11,55 @@ import { useSettings } from '../context/SettingsContext';
 export default function Admin({ setPage }) {
   const { token, user, isAuthenticated } = useAuth();
 
+  const resolveImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    const backendBase = API_URL.replace('/api', '');
+    return `${backendBase}${url}`;
+  };
+
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          resolve(dataUrl);
+        };
+        img.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+    });
+  };
+
   // Active Admin Sub-tab
   const [activeTab, setActiveTab] = useState('stats');
 
@@ -93,7 +142,7 @@ export default function Admin({ setPage }) {
   const [formSizes, setFormSizes] = useState(['Queen', 'King']);
   const [formDescription, setFormDescription] = useState('');
   const [formDetails, setFormDetails] = useState('');
-  const [formImages, setFormImages] = useState(''); // Textarea split by newline
+  const [formImages, setFormImages] = useState([]); // Array of { image_url, is_primary }
 
   const sizeOptions = ['Twin', 'Queen', 'King', 'Standard', 'Euro', 'O/S'];
 
@@ -482,7 +531,7 @@ export default function Admin({ setPage }) {
     setFormSizes(['XS', 'S', 'M', 'L']);
     setFormDescription('');
     setFormDetails('');
-    setFormImages('');
+    setFormImages([]);
     setShowProductModal(true);
   };
 
@@ -501,8 +550,7 @@ export default function Admin({ setPage }) {
       const res = await fetch(`${API_URL}/products/${product.id}`);
       if (res.ok) {
         const detailed = await res.json();
-        const urls = detailed.images ? detailed.images.map(img => img.image_url).join('\n') : '';
-        setFormImages(urls);
+        setFormImages(detailed.images || []);
       }
     } catch (err) {
       console.error('Error loading product details for edit:', err);
@@ -534,11 +582,6 @@ export default function Admin({ setPage }) {
       return;
     }
 
-    const imageLinksArray = formImages
-      .split('\n')
-      .map(url => url.trim())
-      .filter(url => url.length > 0);
-
     const payload = {
       category_id: formCategory,
       name: formName,
@@ -546,7 +589,10 @@ export default function Admin({ setPage }) {
       price: Number(formPrice),
       size_options: formSizes,
       details: formDetails,
-      images: imageLinksArray
+      images: formImages.map(img => ({
+        image_url: img.image_url,
+        is_primary: Boolean(img.is_primary)
+      }))
     };
 
     try {
@@ -1082,16 +1128,42 @@ export default function Admin({ setPage }) {
                   </div>
 
                   <div className="form-group" style={{ marginTop: '1.2rem' }}>
-                    <label className="form-label">Logo Image URL</label>
-                    <input 
-                      type="url" 
-                      className="form-input" 
-                      value={settingsLogoUrl}
-                      onChange={(e) => setSettingsLogoUrl(e.target.value)}
-                      placeholder="https://example.com/logo.png"
-                    />
-                    <small style={{ color: 'var(--color-muted)', fontSize: '0.78rem', marginTop: '0.3rem', display: 'block' }}>
-                      Enter a direct image link (PNG, SVG, JPG). Leave blank to display stylized text logo.
+                    <label className="form-label">Store Logo</label>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem' }}>
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+                          try {
+                            Swal.fire({ title: 'Compressing Logo...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                            const base64Url = await compressImage(file);
+                            setSettingsLogoUrl(base64Url);
+                            Swal.fire({ title: 'Success!', icon: 'success', timer: 1000, showConfirmButton: false });
+                          } catch (err) {
+                            Swal.fire('Error', err.message, 'error');
+                          }
+                        }}
+                        style={{ display: 'none' }}
+                        id="logo-upload-input"
+                      />
+                      <label htmlFor="logo-upload-input" className="btn-secondary" style={{ cursor: 'pointer', padding: '0.6rem 1.2rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                        Choose File
+                      </label>
+                      {settingsLogoUrl && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--color-muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '200px' }}>
+                            {settingsLogoUrl.split('/').pop()}
+                          </span>
+                          <button type="button" onClick={() => setSettingsLogoUrl('')} style={{ background: 'none', border: 'none', color: '#C53030', cursor: 'pointer', padding: 0 }}>
+                            <X size={16} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <small style={{ color: 'var(--color-muted)', fontSize: '0.78rem', marginTop: '0.5rem', display: 'block' }}>
+                      Upload store logo image (PNG, JPG, SVG, WebP).
                     </small>
                   </div>
 
@@ -1154,7 +1226,7 @@ export default function Admin({ setPage }) {
                   <div style={{ border: '1px dashed var(--color-border)', padding: '1.5rem', textAlign: 'center', backgroundColor: 'var(--color-bg-alt)', marginBottom: '1.2rem', minHeight: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {settingsLogoUrl ? (
                       <img 
-                        src={settingsLogoUrl} 
+                        src={resolveImageUrl(settingsLogoUrl)} 
                         alt="Logo Preview" 
                         style={{ maxHeight: '48px', maxWidth: '100%', objectFit: 'contain' }}
                         onError={(e) => {
@@ -1275,13 +1347,113 @@ export default function Admin({ setPage }) {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Product Image Links (One link per line)</label>
-                <textarea 
-                  className="form-input modal-textarea textarea-links" 
-                  value={formImages}
-                  onChange={(e) => setFormImages(e.target.value)}
-                  placeholder="https://images.unsplash.com/...&#10;https://images.unsplash.com/..."
-                />
+                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Product Gallery *</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-muted)' }}>First image will be primary</span>
+                </label>
+
+                {/* Upload Buttons */}
+                <div style={{ marginTop: '0.5rem', marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    multiple
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files);
+                      if (files.length === 0) return;
+                      try {
+                        Swal.fire({ title: 'Compressing images...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                        
+                        const base64Urls = [];
+                        for (const file of files) {
+                          const base64Url = await compressImage(file);
+                          base64Urls.push(base64Url);
+                        }
+
+                        const newImages = base64Urls.map((url, idx) => ({
+                          image_url: url,
+                          is_primary: formImages.length === 0 && idx === 0
+                        }));
+
+                        setFormImages([...formImages, ...newImages]);
+                        Swal.fire({ title: 'Success!', icon: 'success', timer: 1000, showConfirmButton: false });
+                      } catch (err) {
+                        Swal.fire('Error', err.message, 'error');
+                      }
+                    }}
+                    style={{ display: 'none' }}
+                    id="product-gallery-input"
+                  />
+                  <label htmlFor="product-gallery-input" className="btn-secondary" style={{ cursor: 'pointer', padding: '0.6rem 1.2rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                    <Plus size={16} /> Upload Image(s)
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const { value: url } = await Swal.fire({
+                        title: 'Add Image URL',
+                        input: 'url',
+                        inputLabel: 'External Image Link (e.g. Unsplash, Imgur)',
+                        inputPlaceholder: 'https://images.unsplash.com/...',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3D4A3E'
+                      });
+                      if (url) {
+                        setFormImages([...formImages, { image_url: url, is_primary: formImages.length === 0 }]);
+                      }
+                    }}
+                    className="btn-secondary"
+                    style={{ padding: '0.6rem 1.2rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}
+                  >
+                    Add URL Link
+                  </button>
+                </div>
+
+                {/* Image Previews */}
+                {formImages.length > 0 && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '1rem', marginTop: '0.5rem', backgroundColor: 'var(--color-bg-alt)', padding: '1rem', border: '1px solid var(--color-border)' }}>
+                    {formImages.map((img, idx) => (
+                      <div key={idx} style={{ position: 'relative', border: img.is_primary ? '2px solid var(--color-accent)' : '1px solid var(--color-border)', padding: '2px', backgroundColor: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <img 
+                          src={resolveImageUrl(img.image_url)} 
+                          alt={`Product Preview ${idx + 1}`} 
+                          style={{ width: '100%', height: '80px', objectFit: 'cover' }} 
+                        />
+                        
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            const filtered = formImages.filter((_, i) => i !== idx);
+                            if (img.is_primary && filtered.length > 0) {
+                              filtered[0].is_primary = true;
+                            }
+                            setFormImages(filtered);
+                          }} 
+                          style={{ position: 'absolute', top: '-5px', right: '-5px', backgroundColor: '#C53030', color: '#fff', border: 'none', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '10px', padding: 0 }}
+                          title="Remove image"
+                        >
+                          <X size={10} />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = formImages.map((item, i) => ({
+                              ...item,
+                              is_primary: i === idx
+                            }));
+                            setFormImages(updated);
+                          }}
+                          style={{ position: 'absolute', bottom: '2px', right: '2px', backgroundColor: img.is_primary ? 'var(--color-accent)' : 'rgba(255,255,255,0.85)', color: img.is_primary ? '#fff' : 'var(--color-primary)', border: 'none', borderRadius: '2px', fontSize: '9px', padding: '2px 4px', cursor: 'pointer', fontWeight: 600 }}
+                          title="Set as primary thumbnail"
+                        >
+                          {img.is_primary ? 'Primary' : 'Make 1st'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="modal-footer-actions">
