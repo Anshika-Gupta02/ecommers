@@ -23,6 +23,7 @@ export default function Admin({ setPage }) {
   const [inquiriesList, setInquiriesList] = useState([]);
   const [promoList, setPromoList] = useState([]);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Store Settings States
   const { settings, updateSettings } = useSettings();
