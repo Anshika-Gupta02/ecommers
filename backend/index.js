@@ -19,8 +19,6 @@ import { submitInquiry, getStoreSettings } from './controllers/adminController.j
 
 dotenv.config();
 
-await connectDB();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -34,6 +32,16 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Serve static uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Lazy DB connection on first request (non-blocking)
+let connectionAttempted = false;
+app.use((req, res, next) => {
+  if (!connectionAttempted) {
+    connectionAttempted = true;
+    connectDB().catch(err => console.error('Background DB connection error:', err));
+  }
+  next();
+});
 
 // Routes Mount
 app.use('/api/auth', authRoutes);
