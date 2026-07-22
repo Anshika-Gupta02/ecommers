@@ -1,7 +1,7 @@
 {
   "name": "agua-bendita-backend",
   "version": "1.0.0",
-  "description": "E-commerce backend for Agua by Agua Bendita inspired store",
+  "description": "E-commerce backend for  inspired store",
   "main": "index.js",
   "type": "module",
   "scripts": {

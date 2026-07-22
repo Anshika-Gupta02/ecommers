@@ -1,6 +1,6 @@
-# Agua by Agua Bendita E-Commerce Store
+#  E-Commerce Store
 
-A premium full-stack e-commerce web application inspired by the **Agua by Agua Bendita** designer brand. Built using **React (Vite)** on the frontend, **Node.js (Express)** on the backend, and **MongoDB Atlas (Mongoose)** for data management.
+A premium full-stack e-commerce web application inspired by the **** designer brand. Built using **React (Vite)** on the frontend, **Node.js (Express)** on the backend, and **MongoDB Atlas (Mongoose)** for data management.
 
 ---
 

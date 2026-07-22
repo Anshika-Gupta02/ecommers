@@ -44,11 +44,11 @@ app.post('/api/contact', submitInquiry);
 
 // Base route
 app.get('/', (req, res) => {
-  res.json({ message: 'Agua by Agua Bendita E-commerce API is running with MongoDB Atlas...' });
+  res.json({ message: ' E-commerce API is running with MongoDB Atlas...' });
 });
 
 app.get('/api', (req, res) => {
-  res.json({ message: 'Agua by Agua Bendita API is active.' });
+  res.json({ message: ' API is active.' });
 });
 
 // Error handling middleware

@@ -1,7 +1,7 @@
 {
   "name": "agua-by-agua-bendita-root",
   "version": "1.0.0",
-  "description": "Root workspace command to start Agua by Agua Bendita e-commerce store",
+  "description": "Root workspace command to start  e-commerce store",
   "scripts": {
     "install:all": "npm install --prefix backend && npm install --prefix frontend",
     "seed": "node backend/seed-mongo.js",
